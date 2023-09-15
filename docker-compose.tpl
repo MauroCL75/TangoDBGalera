@@ -71,3 +71,15 @@ services:
     volumes:
       - HERE/haproxy:/usr/local/etc/haproxy:ro
 
+  databaseds:
+    image: artefact.skao.int/ska-tango-images-tango-libtango:9.3.6
+    environment:
+      - MYSQL_USER=tango
+      - MYSQL_PASSWORD=changeme
+      - MYSQL_HOST=tangodbgalera-haplb-1:3306
+    command:
+      - /usr/local/bin/DataBaseds
+      - "2"
+      - -v4
+      - -ORBendPoint
+      - giop:tcp:0.0.0.0:10000

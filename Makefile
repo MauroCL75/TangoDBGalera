@@ -25,10 +25,14 @@ lb:
 mktangodb:
 	cd ./sql; pwd; ./loadme.sh
 
+databaseds:
+	@echo starting databaseds
+	docker-compose up -d databaseds
+
 cleanup:
 	cd sql;./del.sh
 
 stop:
 	docker-compose down
 
-all: prep primary rest lb mktangodb
+all: prep primary rest lb mktangodb databaseds

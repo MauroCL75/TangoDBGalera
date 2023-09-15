@@ -10,3 +10,4 @@ make all
 
 ## Caution
 Databaseds has not been tested with Galera and haproxy.
+Change the changme password and the no password if you use this in production.

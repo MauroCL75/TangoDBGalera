@@ -4,7 +4,6 @@ current_dir = $(shell pwd| sed "s+/+\/+g" )
 prep:
 	@echo Running prepare 
 	./cleanup.sh
-	cat docker-compose.tpl |  sed 's+HERE+$(current_dir)+g' > docker-compose.yml
 	
 primary: 
 	@echo starting north
@@ -32,7 +31,10 @@ databaseds:
 cleanup:
 	cd sql;./del.sh
 
+cli:
+	docker-compose up -d tangotest cli
+
 stop:
 	docker-compose down
 
-all: prep primary rest lb mktangodb databaseds
+all: prep primary rest lb mktangodb databaseds cli

@@ -3,11 +3,11 @@
 USER=tango
 PASS=changeme
 DB=tango
-CONTAINER=tangodbgalera-north-1
+CONTAINER=north
 
 lbip=`docker inspect   -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $CONTAINER`
 
-docker exec -u root -i tangodbgalera-north-1 mariadb --verbose mysql < mkuser.sql
+docker exec -u root -i $CONTAINER mariadb --verbose mysql < mkuser.sql
 sleep 20
 mariadb -u $USER -p$PASS -h $lbip $DB  << EOSQL
 source create_db.sql;

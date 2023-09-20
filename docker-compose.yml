@@ -1,0 +1,127 @@
+version: '3.0'
+
+services:
+  north:
+    container_name: north
+    hostname: north
+    image: docker.io/bitnami/mariadb-galera:11.0
+    volumes:
+      - ${PWD}/storage/1:/bitnami/mariadb
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_USER=haproxy
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://
+      - MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes
+    healthcheck:
+      test: ['CMD', '/opt/bitnami/scripts/mariadb-galera/healthcheck.sh']
+      interval: 15s
+      timeout: 5s
+      retries: 6
+
+  south:
+    container_name: south
+    hostname: south
+    image: docker.io/bitnami/mariadb-galera:11.0
+    volumes:
+      - ${PWD}/storage/2:/bitnami/mariadb
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://tangodbgalera_north_1
+    depends_on:
+      - north
+    healthcheck:
+      test: ['CMD', '/opt/bitnami/scripts/mariadb-galera/healthcheck.sh']
+      interval: 15s
+      timeout: 5s
+      retries: 6
+
+  east:
+    container_name: east
+    hostname: east
+    image: docker.io/bitnami/mariadb-galera:11.0
+    volumes:
+      - ${PWD}/storage/3:/bitnami/mariadb
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://tangodbgalera_north_1
+      #- MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://north_1
+    depends_on:
+      - north
+    healthcheck:
+      test: ['CMD', '/opt/bitnami/scripts/mariadb-galera/healthcheck.sh']
+      interval: 15s
+      timeout: 5s
+      retries: 6
+
+  west:
+    container_name: west
+    hostname: west
+    image: docker.io/bitnami/mariadb-galera:11.0
+    volumes:
+      - ${PWD}/storage/4:/bitnami/mariadb
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://tangodbgalera_north_1
+      #- MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://north_1
+    depends_on:
+      - north
+    healthcheck:
+      test: ['CMD', '/opt/bitnami/scripts/mariadb-galera/healthcheck.sh']
+      interval: 15s
+      timeout: 5s
+      retries: 6
+
+  haplb:
+    container_name: haplb
+    hostname: haplb
+    image: haproxy:2.8-alpine
+    volumes:
+      - ${PWD}/haproxy:/usr/local/etc/haproxy:ro
+
+  databaseds:
+    container_name: databaseds
+    hostname: databaseds
+    image: artefact.skao.int/ska-tango-images-tango-libtango:9.3.6
+    environment:
+      - MYSQL_USER=tango
+      - MYSQL_PASSWORD=changeme
+      - MYSQL_HOST=haplb:3306
+    command:
+      - /usr/local/bin/DataBaseds
+      - "2"
+      - -v4
+      - -ORBendPoint
+      - giop:tcp:0.0.0.0:10000
+
+  tangotest:
+    container_name: tangotest
+    hostname: tangotest
+    image: artefact.skao.int/ska-tango-images-tango-test:3.0.2
+    # https://gitlab.com/ska-telescope/ska-tango-images/-/blob/master/docker/tango/tango-test/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - databaseds
+    environment:
+      - TANGO_HOST=databaseds:10000
+    command:
+      test
+
+  cli:
+    container_name: cli
+    hostname: cli
+    image: artefact.skao.int/ska-tango-images-tango-itango:9.3.4
+    # https://gitlab.com/ska-telescope/ska-tango-images/-/blob/master/docker/tango/tango-itango/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - databaseds
+    volumes:
+      - ${PWD}/storage/cli:/cli
+    environment:
+      - TANGO_HOST=tangodbgalera_databaseds_1:10000
+    command: >
+      tail -F /dev/null
+

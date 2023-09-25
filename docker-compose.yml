@@ -122,7 +122,7 @@ services:
     volumes:
       - ${PWD}/storage/cli:/cli
     environment:
-      - TANGO_HOST=databaseds_1:10000
+      - TANGO_HOST=databaseds:10000
     command: >
       tail -F /dev/null
 

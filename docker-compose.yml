@@ -90,6 +90,7 @@ services:
       - MYSQL_USER=tango
       - MYSQL_PASSWORD=changeme
       - MYSQL_HOST=haplb:3306
+      - TANGO_HOST=databaseds:10000
     command:
       - /usr/local/bin/DataBaseds
       - "2"
